@@ -2,16 +2,16 @@ package data
 
 import "time"
 
-// structure for API product
+// structure for API product with struct tag
 type Product struct {
-	ID          int // unique ID
-	Name        string
-	Description string
-	Price       float32
-	SKU         string
-	CreatedOn   string
-	UpdatedOn   string
-	DeletedOn   string
+	ID          int     `json:"id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Price       float32 `json:"price"`
+	SKU         string  `json:"sku"`
+	CreatedOn   string  `json:"-"`
+	UpdatedOn   string  `json:"-"`
+	DeletedOn   string  `json:"-"`
 }
 
 // data access model
