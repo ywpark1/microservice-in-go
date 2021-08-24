@@ -1,33 +1,56 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
+	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"time"
+
+	"github.com/ywpark1/microservice-in-go/handlers"
 )
 
 func main() {
 
-	http.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
-		log.Println("Hello World")
-		d, err := ioutil.ReadAll(req.Body)
+	l := log.New(os.Stdout, "product-api\n", log.LstdFlags)
+	hh := handlers.NewHello(l)
+	gh := handlers.NewGoodbye(l)
 
+	sm := http.NewServeMux()
+	sm.Handle("/", hh)
+	sm.Handle("/goodbye", gh)
+
+	s := http.Server{
+		Addr:         ":9090",
+		Handler:      sm,
+		IdleTimeout:  120 * time.Second,
+		ReadTimeout:  1 * time.Second,
+		WriteTimeout: 1 * time.Second,
+	}
+
+	go func() {
+		err := s.ListenAndServe()
 		if err != nil {
-			http.Error(rw, "Oops", http.StatusBadRequest)
-			// rw.WriteHeader(http.StatusBadRequest) // status code send
-			// rw.Write([]byte("Oops"))
-			return
+			// log.Fatal(err)
+			l.Printf("Error starting server: %s\n", err)
+			os.Exit(1)
+
 		}
+	}()
 
-		log.Printf("Data %s\n", d)
-		fmt.Fprintf(rw, "Hello %s", d) // response
-	})
+	// trap sigterm or interupt and gracefully shutdown the server
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, os.Kill)
 
-	http.HandleFunc("/goodbye", func(http.ResponseWriter, *http.Request) {
-		log.Println("Goodbye World")
-	})
+	// Block until a signal is received.
+	sig := <-c
+	log.Println("Got signal:", sig)
 
-	http.ListenAndServe(":9090", nil)
+	// gracefully shutdown the server, waiting max 30 seconds for current operations to complete
+	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	s.Shutdown(ctx)
 
+	// http.ListenAndServe(":9090", sm)
 }
