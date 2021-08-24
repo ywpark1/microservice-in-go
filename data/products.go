@@ -1,6 +1,10 @@
 package data
 
-import "time"
+import (
+	"encoding/json"
+	"io"
+	"time"
+)
 
 // structure for API product with struct tag
 type Product struct {
@@ -14,8 +18,15 @@ type Product struct {
 	DeletedOn   string  `json:"-"`
 }
 
-// data access model
-func GetProducts() []*Product {
+type Products []*Product
+
+func (p *Products) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(p)
+}
+
+// return the list of products
+func GetProducts() Products {
 	return productList
 }
 
