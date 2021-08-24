@@ -14,6 +14,11 @@ type Product struct {
 	DeletedOn   string
 }
 
+// data access model
+func GetProducts() []*Product {
+	return productList
+}
+
 // create sample product list
 var productList = []*Product{
 	&Product{

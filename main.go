@@ -18,13 +18,11 @@ func main() {
 	l := log.New(os.Stdout, "product-api\n", log.LstdFlags)
 
 	// create the handlers
-	hh := handlers.NewHello(l)
-	gh := handlers.NewGoodbye(l)
+	ph := handlers.NewProducts(l)
 
 	// create a new ServeMux and register the handlers
 	sm := http.NewServeMux()
-	sm.Handle("/", hh)
-	sm.Handle("/goodbye", gh)
+	sm.Handle("/", ph)
 
 	// create a new server
 	s := http.Server{
@@ -61,5 +59,4 @@ func main() {
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 	s.Shutdown(ctx)
 
-	// http.ListenAndServe(":9090", sm)
 }
