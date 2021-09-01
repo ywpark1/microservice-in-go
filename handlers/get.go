@@ -15,6 +15,8 @@ import (
 func (p *Products) GetProducts(rw http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle GET Products")
 
+	rw.Header().Add("Content-Type", "application/json")
+
 	// fetch the products from the datastore
 	lp := data.GetProducts()
 
@@ -25,11 +27,13 @@ func (p *Products) GetProducts(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// swagger:route GET /products/{id} products listSingle
+// swagger:route GET /products/{id} products listSingleProduct
 // Return a list of products from the database
 // responses:
 //	200: productResponse
 //	404: errorResponse
+
+// GetProduct handles GET requests
 func (p *Products) GetProduct(rw http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle GET Single Product")
 

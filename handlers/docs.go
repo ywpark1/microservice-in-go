@@ -52,9 +52,9 @@ type productParamsWrapper struct {
 	Body data.Product
 }
 
-// swagger:parameters deleteProduct
+// swagger:parameters listSingleProduct deleteProduct
 type productIDParameterWrapper struct {
-	// The id of the product to delete from the database
+	// The id of the product for which the operation relates
 	// in: path
 	// required: true
 	ID int `json:"id"`

@@ -18,7 +18,7 @@ import (
 func main() {
 	port := "9090"
 
-	l := log.New(os.Stdout, "product-api\n", log.LstdFlags)
+	l := log.New(os.Stdout, "product-api ", log.LstdFlags)
 	v := data.NewValidation()
 
 	// create the handlers
