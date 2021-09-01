@@ -1,14 +1,14 @@
 package data
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"regexp"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 )
+
+// ErrProductNotFound is an error raised when a product can not be found in the database
+var ErrProductNotFound = fmt.Errorf("Product not found")
 
 // structure for API product with struct tag
 // swagger:model
@@ -48,11 +48,6 @@ type Product struct {
 	DeletedOn string `json:"-"`
 }
 
-func (p *Product) FromJSON(r io.Reader) error {
-	e := json.NewDecoder(r)
-	return e.Decode(p)
-}
-
 func (p *Product) Validate() error {
 	validate := validator.New()
 
@@ -61,27 +56,10 @@ func (p *Product) Validate() error {
 	return validate.Struct(p)
 }
 
-func validateSKU(fl validator.FieldLevel) bool {
-	// sku is of format abc-absd-adfsd
-	re := regexp.MustCompile(`[a-z]+-[a-z]+-[a-z]+`)
-	matches := re.FindAllString(fl.Field().String(), -1)
-
-	return len(matches) == 1
-}
-
 // Collection of Product
 type Products []*Product
 
-// ToJSON serialize the contents of the collection to JSON
-// NewEncoder provides better performance than json.Unmarshal as it does not
-// have to buffer the output into an in memory slice of bytes
-// this reduces allocations and the overheads of the service
-func (p *Products) ToJSON(w io.Writer) error {
-	e := json.NewEncoder(w)
-	return e.Encode(p)
-}
-
-// return the list of products
+// GetProducts returns all products from the database
 func GetProducts() Products {
 	return productList
 }
@@ -100,19 +78,24 @@ func GetProductByID(id int) (*Product, error) {
 
 // attach next available id to new product
 // and add it to the existing list of products
-func AddProduct(p *Product) {
+func AddProduct(p Product) {
 	p.ID = getNextID()
-	productList = append(productList, p)
+	productList = append(productList, &p)
 }
 
-func UpdateProduct(id int, p *Product) error {
-	_, pos, err := findProduct(id)
-	if err != nil {
-		return err
+// UpdateProduct replaces a product in the database with the given
+// item.
+// If a product with the given id does not exist in the database
+// this function returns a ProductNotFound error
+func UpdateProduct(p Product) error {
+	i := findIndexByProductID(p.ID)
+	if i == -1 {
+		return ErrProductNotFound
 	}
 
-	p.ID = id
-	productList[pos] = p
+	// update the product in the DB
+	productList[i] = &p
+
 	return nil
 }
 
@@ -140,19 +123,10 @@ func findIndexByProductID(id int) int {
 	return -1
 }
 
-var ErrProductNotFound = fmt.Errorf("Product not found")
-
-func findProduct(id int) (*Product, int, error) {
-	for i, p := range productList {
-		if p.ID == id {
-			return p, i, nil
-		}
-	}
-
-	return nil, -1, ErrProductNotFound
-}
-
 func getNextID() int {
+	if len(productList) == 0 {
+		return 1
+	}
 	lp := productList[len(productList)-1]
 	return lp.ID + 1
 }
@@ -177,11 +151,4 @@ var productList = []*Product{
 		CreatedOn:   time.Now().UTC().String(),
 		UpdatedOn:   time.Now().UTC().String(),
 	},
-}
-
-// ToJSON serializes the given interface into a string based JSON format
-func ToJSON(i interface{}, w io.Writer) error {
-	e := json.NewEncoder(w)
-
-	return e.Encode(i)
 }

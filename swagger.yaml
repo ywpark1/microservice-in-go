@@ -2,6 +2,14 @@ basePath: /
 consumes:
 - application/json
 definitions:
+  GenericError:
+    description: GenericError is a generic error message returned by a server
+    properties:
+      message:
+        type: string
+        x-go-name: Message
+    type: object
+    x-go-package: github.com/ywpark1/microservice-in-go/handlers
   Product:
     description: structure for API product with struct tag
     properties:
@@ -38,6 +46,16 @@ definitions:
     - sku
     type: object
     x-go-package: github.com/ywpark1/microservice-in-go/data
+  ValidationError:
+    description: ValidationError is a collection of validation error messages
+    properties:
+      messages:
+        items:
+          type: string
+        type: array
+        x-go-name: Messages
+    type: object
+    x-go-package: github.com/ywpark1/microservice-in-go/handlers
 info:
   description: Documentation for Product API
   title: of Product API
@@ -52,9 +70,30 @@ paths:
           $ref: '#/responses/productsResponse'
       tags:
       - products
+    post:
+      description: Create a new product
+      operationId: createProduct
+      parameters:
+      - description: |-
+          Product data structure to Update or Create.
+          Note: the id field is ignored by update and create operations
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/Product'
+      responses:
+        "200":
+          $ref: '#/responses/productResponse'
+        "422":
+          $ref: '#/responses/errorValidation'
+        "501":
+          $ref: '#/responses/errorResponse'
+      tags:
+      - products
   /products/{id}:
     delete:
-      description: Delete a product
+      description: Update a products details
       operationId: deleteProduct
       parameters:
       - description: The id of the product to delete from the database
@@ -67,11 +106,33 @@ paths:
       responses:
         "201":
           $ref: '#/responses/noContentResponse'
+        "404":
+          $ref: '#/responses/errorResponse'
+        "501":
+          $ref: '#/responses/errorResponse'
+      tags:
+      - products
+    get:
+      description: Return a list of products from the database
+      operationId: listSingle
+      responses:
+        "200":
+          $ref: '#/responses/productResponse'
+        "404":
+          $ref: '#/responses/errorResponse'
       tags:
       - products
 produces:
 - application/json
 responses:
+  errorResponse:
+    description: Generic error message returned as a string
+    schema:
+      $ref: '#/definitions/GenericError'
+  errorValidation:
+    description: Validation errors defined as an array of strings
+    schema:
+      $ref: '#/definitions/ValidationError'
   noContentResponse:
     description: No content is returned by this API endpoint
   productResponse:

@@ -11,17 +11,18 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 
 	"github.com/gorilla/mux"
+	"github.com/ywpark1/microservice-in-go/data"
 	"github.com/ywpark1/microservice-in-go/handlers"
 )
 
 func main() {
-
 	port := "9090"
 
 	l := log.New(os.Stdout, "product-api\n", log.LstdFlags)
+	v := data.NewValidation()
 
 	// create the handlers
-	ph := handlers.NewProducts(l)
+	ph := handlers.NewProducts(l, v)
 
 	// create a mux Router
 	sm := mux.NewRouter()
@@ -31,16 +32,17 @@ func main() {
 	getRouter.HandleFunc("/products/{id:[0-9]+}", ph.GetProduct)
 
 	putRouter := sm.Methods(http.MethodPut).Subrouter()
-	putRouter.HandleFunc("/{id:[0-9]+}", ph.UpdateProducts)
+	putRouter.HandleFunc("/products", ph.UpdateProduct)
 	putRouter.Use(ph.MiddlewareProductValidation)
 
 	postRouter := sm.Methods(http.MethodPost).Subrouter()
-	postRouter.HandleFunc("/", ph.AddProduct)
+	postRouter.HandleFunc("/products", ph.AddProduct)
 	postRouter.Use(ph.MiddlewareProductValidation)
 
 	deleteRouter := sm.Methods(http.MethodDelete).Subrouter()
 	deleteRouter.HandleFunc("/products/{id:[0-9]+}", ph.DeleteProduct)
 
+	// handler for documentation
 	opts := middleware.RedocOpts{SpecURL: "/swagger.yaml"}
 	sh := middleware.Redoc(opts, nil)
 
@@ -83,5 +85,4 @@ func main() {
 	// gracefully shutdown the server, waiting max 30 seconds for current operations to complete
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 	s.Shutdown(ctx)
-
 }
