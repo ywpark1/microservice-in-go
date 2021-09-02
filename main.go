@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime/middleware"
 
+	gohandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/ywpark1/microservice-in-go/data"
 	"github.com/ywpark1/microservice-in-go/handlers"
@@ -49,12 +50,14 @@ func main() {
 	getRouter.Handle("/docs", sh)
 	getRouter.Handle("/swagger.yaml", http.FileServer(http.Dir("./")))
 
-	// sm.Handle("/products", ph)
+	// CORS
+	ch := gohandlers.CORS(gohandlers.AllowedOrigins([]string{"http://localhost:3000"}))
+	// ch := gohandlers.CORS(gohandlers.AllowedOrigins([]string{"*"}))
 
 	// create a new server
 	s := http.Server{
 		Addr:         ":" + port,        // configure the bind address
-		Handler:      sm,                // set the default handler
+		Handler:      ch(sm),            // set the default handler
 		ErrorLog:     l,                 // set the logger for the server
 		IdleTimeout:  120 * time.Second, // max time to read request from the client
 		ReadTimeout:  1 * time.Second,   // max time to write response to the client
